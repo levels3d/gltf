@@ -109,7 +109,7 @@ pub mod image;
 /// The reference importer.
 #[cfg(feature = "import")]
 #[cfg_attr(docsrs, doc(cfg(feature = "import")))]
-mod import;
+pub mod import;
 
 /// Iterators for walking the glTF node hierarchy.
 pub mod iter;
@@ -351,7 +351,7 @@ impl Document {
     }
 
     /// Perform validation checks on loaded glTF.
-    pub(crate) fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<()> {
         use json::validation::Validate;
         let mut errors = Vec::new();
         self.0.validate(
