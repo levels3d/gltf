@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use gltf_derive::Validate;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
+use serde_json::value::Value;
 
 /// A node in the node hierarchy.  When the node contains `skin`, all
 /// `mesh.primitives` must contain `JOINTS_0` and `WEIGHTS_0` attributes.
@@ -14,25 +17,28 @@ use serde_derive::{Serialize, Deserialize};
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
 pub struct Node {
     #[cfg(feature = "KHR_lights_punctual")]
-    #[serde(default, rename = "KHR_lights_punctual", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "KHR_lights_punctual",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub khr_lights_punctual: Option<khr_lights_punctual::KhrLightsPunctual>,
+
+    #[serde(default, flatten)]
+    pub others: HashMap<String, Value>,
 }
 
 #[cfg(feature = "KHR_lights_punctual")]
 pub mod khr_lights_punctual {
-    use crate::{Extras, Index, Root, Path};
     use crate::validation::{Checked, Error, Validate};
+    use crate::{Extras, Index, Path, Root};
     use gltf_derive::Validate;
     use serde::{de, ser};
     use serde_derive::{Deserialize, Serialize};
     use std::fmt;
 
     /// All valid light types.
-    pub const VALID_TYPES: &'static [&'static str] = &[
-        "directional",
-        "point",
-        "spot",
-    ];
+    pub const VALID_TYPES: &'static [&'static str] = &["directional", "point", "spot"];
 
     #[derive(Clone, Debug, Deserialize, Serialize, Validate)]
     pub struct KhrLightsPunctual {
@@ -111,7 +117,9 @@ pub mod khr_lights_punctual {
 
     impl Validate for Light {
         fn validate<P, R>(&self, root: &Root, path: P, report: &mut R)
-            where P: Fn() -> Path, R: FnMut(&dyn Fn() -> Path, Error)
+        where
+            P: Fn() -> Path,
+            R: FnMut(&dyn Fn() -> Path, Error),
         {
             if let Checked::Valid(ty) = self.type_.as_ref() {
                 if *ty == Type::Spot && self.spot.is_none() {
@@ -120,8 +128,10 @@ pub mod khr_lights_punctual {
             }
 
             self.type_.validate(root, || path().field("type"), report);
-            self.extensions.validate(root, || path().field("extensions"), report);
-            self.extras.validate(root, || path().field("extras"), report);
+            self.extensions
+                .validate(root, || path().field("extensions"), report);
+            self.extras
+                .validate(root, || path().field("extras"), report);
         }
     }
 
@@ -152,7 +162,8 @@ pub mod khr_lights_punctual {
 
     impl<'de> de::Deserialize<'de> for Checked<Type> {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where D: de::Deserializer<'de>
+        where
+            D: de::Deserializer<'de>,
         {
             struct Visitor;
             impl<'de> de::Visitor<'de> for Visitor {
@@ -163,7 +174,8 @@ pub mod khr_lights_punctual {
                 }
 
                 fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-                    where E: de::Error
+                where
+                    E: de::Error,
                 {
                     use self::Type::*;
                     use crate::validation::Checked::*;
@@ -181,8 +193,8 @@ pub mod khr_lights_punctual {
 
     impl ser::Serialize for Type {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-            S: ser::Serializer
+        where
+            S: ser::Serializer,
         {
             serializer.serialize_str(match *self {
                 Type::Directional => "directional",
@@ -195,4 +207,7 @@ pub mod khr_lights_punctual {
 
 /// The root `Node`s of a scene.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
-pub struct Scene {}
+pub struct Scene {
+    #[serde(default, flatten)]
+    pub others: HashMap<String, Value>,
+}

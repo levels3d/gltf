@@ -1,22 +1,38 @@
+use std::collections::HashMap;
+
 #[cfg(feature = "KHR_texture_transform")]
 use crate::{extras::Extras, validation::Validate};
 use gltf_derive::Validate;
 use serde_derive::{Deserialize, Serialize};
+use serde_json::value::Value;
 
 /// Texture sampler properties for filtering and wrapping modes.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
-pub struct Sampler {}
+pub struct Sampler {
+    #[serde(default, flatten)]
+    pub others: HashMap<String, Value>,
+}
 
 /// A texture and its sampler.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
-pub struct Texture {}
+pub struct Texture {
+    #[serde(default, flatten)]
+    pub others: HashMap<String, Value>,
+}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Validate)]
 /// Reference to a `Texture`.
 pub struct Info {
     #[cfg(feature = "KHR_texture_transform")]
-    #[serde(default, rename = "KHR_texture_transform", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "KHR_texture_transform",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub texture_transform: Option<TextureTransform>,
+
+    #[serde(default, flatten)]
+    pub others: HashMap<String, Value>,
 }
 
 /// Many techniques can be used to optimize resource usage for a 3d scene.
